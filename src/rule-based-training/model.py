@@ -4,8 +4,8 @@ import json
 import torch
 import torch.nn as nn
 from torch.distributions import Categorical
-from util.smiles.char_dict import SmilesCharDictionary
-from util.smiles.function import smis_to_actions
+from util.char_dict import SmilesCharDictionary
+from util.function import smis_to_actions
 
 
 class SmilesGenerator(nn.Module):

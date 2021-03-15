@@ -5,10 +5,10 @@ import random
 import torch
 from torch.optim import Adam
 
-from trainer import PreTrainer
+from trainer import Trainer
 from model import SmilesGenerator, SmilesGeneratorHandler
-from util.smiles.dataset import load_dataset
-from util.smiles.char_dict import SmilesCharDictionary
+from util.dataset import load_dataset
+from util.char_dict import SmilesCharDictionary
 
 import neptune
 
@@ -16,9 +16,24 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="run", formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
-    parser.add_argument("--dataset", type=str, default="zinc_daga")
-    parser.add_argument("--dataset_path", type=str, default="./resource/data/zinc_daga/full.txt")
+    parser.add_argument("--dataset", type=str, default="zinc")
+    parser.add_argument(
+        "--train_dataset_path",
+        type=str,
+        default="/home/peterahn/Workspace/chem-substruct/resource/data/zinc/train.txt",
+    )
+    parser.add_argument(
+        "--vali_dataset_path",
+        type=str,
+        default="/home/peterahn/Workspace/chem-substruct/resource/data/zinc/valid.txt",
+    )
+    parser.add_argument(
+        "--test_dataset_path",
+        type=str,
+        default="/home/peterahn/Workspace/chem-substruct/resource/data/zinc/test.txt",
+    )
     parser.add_argument("--max_smiles_length", type=int, default=80)
+
     parser.add_argument("--hidden_size", type=int, default=1024)
     parser.add_argument("--n_layers", type=int, default=3)
     parser.add_argument("--lstm_dropout", type=float, default=0.2)
@@ -27,7 +42,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_epochs", type=int, default=10)
     parser.add_argument("--batch_size", type=int, default=256)
 
-    parser.add_argument("--save_dir", default="./resource/checkpoint/zinc_daga/")
+    parser.add_argument("--save_dir", default="./resource/checkpoint/rule-based-training/")
 
     args = parser.parse_args()
 
@@ -38,9 +53,10 @@ if __name__ == "__main__":
     neptune.create_experiment(name="pretrain", params=vars(args))
     neptune.append_tag(args.dataset)
 
-    """
     char_dict = SmilesCharDictionary(dataset=args.dataset, max_smi_len=args.max_smiles_length)
-    dataset = load_dataset(char_dict=char_dict, smi_path=args.dataset_path)
+    train_dataset = load_dataset(char_dict=char_dict, smi_path=args.train_dataset_path)
+    vali_dataset = load_dataset(char_dict=char_dict, smi_path=args.vali_dataset_path)
+    test_dataset = load_dataset(char_dict=char_dict, smi_path=args.test_dataset_path)
 
     input_size = max(char_dict.char_idx.values()) + 1
     generator = SmilesGenerator(
@@ -56,9 +72,11 @@ if __name__ == "__main__":
         model=generator, optimizer=optimizer, char_dict=char_dict, max_sampling_batch_size=0
     )
 
-    trainer = PreTrainer(
+    trainer = Trainer(
         char_dict=char_dict,
-        dataset=dataset,
+        train_dataset=train_dataset,
+        vali_dataset=vali_dataset,
+        test_dataset=test_dataset,
         generator_handler=generator_handler,
         num_epochs=args.num_epochs,
         batch_size=args.batch_size,
@@ -67,4 +85,3 @@ if __name__ == "__main__":
     )
 
     trainer.train()
-    """

@@ -3,7 +3,6 @@ from pathlib import Path
 import json
 from tqdm import tqdm
 import numpy as np
-from util.smiles.char_dict import SmilesCharDictionary
 
 
 def load_dataset(char_dict, smi_path):
