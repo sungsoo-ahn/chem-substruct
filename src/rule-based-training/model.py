@@ -141,7 +141,7 @@ class SmilesGeneratorHandler:
         loss = self.train_on_action_batch(actions=actions, device=device, weights=weights)
         return loss
 
-    def train_on_action_batch(self, actions, device, weights=1.0):
+    def get_loss_on_action_batch(self, actions, device, weights=1.0):
         batch_size = actions.size(0)
         batch_seq_length = actions.size(1)
 
@@ -168,12 +168,19 @@ class SmilesGeneratorHandler:
             entropy = -torch.sum(torch.exp(log_probs) * log_probs, dim=1).mean()
             loss -= self.entropy_factor * entropy
 
+        return loss
+
+    def train_on_action_batch(self, actions, device, weights=1.0):
+        loss = self.get_loss_on_action_batch(actions, device, weights)
+        loss = self.train_on_loss(loss)
+        return loss
+
+    def train_on_loss(self, loss):
         self.model.zero_grad()
         loss.backward()
         nn.utils.clip_grad_norm_(self.model.parameters(), 1.0)
         self.optimizer.step()
-
-        return loss.item()
+        return loss
 
     def get_action_log_prob(self, actions, seq_lengths, device):
         num_samples = actions.size(0)

@@ -8,7 +8,7 @@ from tqdm import tqdm
 
 from rdkit import Chem
 
-def canonicalize_smi(smiles):
+def canonicalize(smiles):
     try:
         mol = Chem.MolFromSmiles(smiles)
         mol = Chem.RemoveHs(mol)
@@ -17,7 +17,7 @@ def canonicalize_smi(smiles):
         smiles = Chem.MolToSmiles(mol)
         return smiles
     except:
-        return ""    
+        return None
 
 
 def process_smis(
@@ -31,7 +31,7 @@ def process_smis(
 ):
     if canonicalization:
         smis = pool(
-            delayed(lambda smi: canonicalize_smi(smi))(smi) for smi in smis
+            delayed(lambda smi: canonicalize(smi))(smi) for smi in smis
         )
         smis = list(filter(lambda smi: (smi is not None) and (len(smi) < max_smi_len), smis))
 

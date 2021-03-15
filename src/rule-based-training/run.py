@@ -5,7 +5,7 @@ import random
 import torch
 from torch.optim import Adam
 
-from trainer import Trainer
+from trainer import Trainer, FilterTrainer
 from model import SmilesGenerator, SmilesGeneratorHandler
 from util.dataset import load_dataset
 from util.char_dict import SmilesCharDictionary
@@ -20,17 +20,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_dataset_path",
         type=str,
-        default="/home/peterahn/Workspace/chem-substruct/resource/data/zinc/train.txt",
+        default="/home/sungs/workspace/chem-substruct/resource/data/zinc/train.txt",
     )
     parser.add_argument(
         "--vali_dataset_path",
         type=str,
-        default="/home/peterahn/Workspace/chem-substruct/resource/data/zinc/valid.txt",
+        default="/home/sungs/workspace/chem-substruct/resource/data/zinc/valid.txt",
     )
     parser.add_argument(
         "--test_dataset_path",
         type=str,
-        default="/home/peterahn/Workspace/chem-substruct/resource/data/zinc/test.txt",
+        default="/home/sungs/workspace/chem-substruct/resource/data/zinc/test.txt",
     )
     parser.add_argument("--max_smiles_length", type=int, default=80)
 
@@ -39,7 +39,8 @@ if __name__ == "__main__":
     parser.add_argument("--lstm_dropout", type=float, default=0.2)
 
     parser.add_argument("--learning_rate", type=float, default=1e-3)
-    parser.add_argument("--num_epochs", type=int, default=10)
+    parser.add_argument("--num_steps", type=int, default=100000)
+    parser.add_argument("--log_freq", type=int, default=100)
     parser.add_argument("--batch_size", type=int, default=256)
 
     parser.add_argument("--save_dir", default="./resource/checkpoint/rule-based-training/")
@@ -69,7 +70,10 @@ if __name__ == "__main__":
     generator = generator.to(device)
     optimizer = Adam(params=generator.parameters(), lr=args.learning_rate)
     generator_handler = SmilesGeneratorHandler(
-        model=generator, optimizer=optimizer, char_dict=char_dict, max_sampling_batch_size=0
+        model=generator,
+        optimizer=optimizer,
+        char_dict=char_dict,
+        max_sampling_batch_size=args.batch_size,
     )
 
     trainer = Trainer(
@@ -78,7 +82,8 @@ if __name__ == "__main__":
         vali_dataset=vali_dataset,
         test_dataset=test_dataset,
         generator_handler=generator_handler,
-        num_epochs=args.num_epochs,
+        num_steps=args.num_steps,
+        log_freq=args.log_freq,
         batch_size=args.batch_size,
         save_dir=args.save_dir,
         device=device,
